@@ -1,83 +1,167 @@
+// import { NextRequest, NextResponse } from 'next/server'
+// import pdfParse from 'pdf-parse'
+// import OpenAI from 'openai'
+
+// const openai = new OpenAI({
+//   apiKey: process.env.OPENAI_API_KEY!,
+// })
+
+// export async function POST(req: NextRequest) {
+//   try {
+//     console.log("hello")
+//     const formData = await req.formData()
+//     const file = formData.get('resume') as File
+
+//     if (!file || !(file instanceof File)) {
+//       return NextResponse.json({ success: false, message: 'No resume uploaded' }, { status: 400 })
+//     }
+
+//     // Convert uploaded File to Buffer
+//     const buffer = Buffer.from(await file.arrayBuffer())
+
+//     // Parse text from PDF
+//     const parsed = await pdfParse(buffer)
+//     const resumeText = parsed.text
+
+//     // Send to OpenAI for smart extraction
+//     const prompt = `
+// Extract the following information from the resume text below:
+// - Full Name
+// - Email
+// - Skills (as an array)
+// - Education (list)
+// - Work Experience (list)
+// - Projects (name + short description)
+// - Achievements (if mentioned)
+
+// Return only this JSON structure:
+
+// {
+//   "name": "",
+//   "email": "",
+//   "skills": [],
+//   "education": [],
+//   "experience": [],
+//   "projects": [],
+//   "achievements": []
+// }
+
+// Resume Text:
+// """
+// ${resumeText}
+// """
+//     `.trim()
+
+//     const chatCompletion = await openai.chat.completions.create({
+//       model: 'gpt-3.5-turbo',
+//       messages: [{ role: 'user', content: prompt }],
+//       temperature: 0.3,
+//     })
+
+//     const content = chatCompletion.choices[0]?.message?.content
+
+//     let extracted
+//     try {
+//       extracted = JSON.parse(content!)
+//     } catch (err) {
+//       return NextResponse.json({
+//         success: false,
+//         message: 'Failed to parse GPT JSON response',
+//         raw: content,
+//       }, { status: 500 })
+//     }
+
+//     return NextResponse.json({
+//       success: true,
+//       message: 'Resume parsed successfully',
+//       data: extracted,
+//     }, { status: 200 })
+//   } catch (error) {
+//     console.error('❌ Error in resume reader:', error)
+//     return NextResponse.json({
+//       success: false,
+//       message: 'Server error while reading resume',
+//     }, { status: 500 })
+//   }
+// }
 import { NextRequest, NextResponse } from 'next/server'
 import pdfParse from 'pdf-parse'
 import OpenAI from 'openai'
 
+// connect db 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!, // Make sure this is set in .env
+})
 
-export async function POST(request :Request ) {
-    // await dbconnect()
-        
-        const data = await request.formData()
-        const file = data.get('resume') as File
+export async function POST(req: NextRequest) {
+  try {
+    const data = await req.formData()
+    const file = data.get('resume') as File
 
-        if (!file) {
-            return Response.json({
-                success : false,
-                message : 'File is not found '
-            }, {status : 404})
-        }
+    if (!file) {
+      return NextResponse.json({ success: false, message: 'No resume uploaded' }, { status: 400 })
+    }
 
-        const buffer  = Buffer.from(await file.arrayBuffer())
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const parsed = await pdfParse(buffer)
+    const text = parsed.text
 
-        try {
-            
-            const parsed = await pdfParse(buffer)
-            const text = parsed.text
-            const propmt = `Extract the following information from this resume:
-                - Full name
-                - Email
-                - Skills (as an array)
-                - Education (list of entries)
-                - Work Experience (list)
-                - Projects (name + description)
-                - Achievements
+    const prompt = `
+Extract the following details from this resume text:
 
-                Return the result as JSON with this structure:
-                {
-                  "name": "",
-                  "email": "",
-                  "skills": [],
-                  "education": [],
-                  "experience": [],
-                  "projects": [],
-                  "achievements": []
-                }
+- Full name
+- Email
+- Skills (array)
+- Education (list of degrees/institutions)
+- Work Experience (list with company, role, duration)
+- Projects (title, tech stack, description)
+- Achievements
 
-                Resume Text:
-                """ 
-                ${text}
-                """
-                `
-            const openai = new OpenAI({apiKey : process.env.OPENAI_API_KEY!})
-            const chatComplition = await openai.chat.completions.create({
-                model : 'gpt-4',
-                messages : [{role : 'user', content : propmt}],
-                temperature : 0.2
-            })
+Return the output in JSON format:
+{
+  "name": "",
+  "email": "",
+  "skills": [],
+  "education": [],
+  "experience": [],
+  "projects": [],
+  "achievements": []
+}
 
-            const content = chatComplition.choices[0].message.content
+Resume:
+"""${text}"""
+`.trim()
 
-            let json
-            try {
-                json = JSON.parse(content!)
-            } catch (error) {
-                return Response.json({
-                success : false,
-                message : 'Failed to parse GPT response'
-            } , {status : 500})
-            }
+    const chatCompletion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo', // ✅ FREE TIER MODEL
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+    })
 
-            return Response.json({
-                success : true,
-                message : 'GPT response get successfully ',
-                data : json
-            } , {status : 200})
-            
+    const content = chatCompletion.choices[0].message?.content
 
-        } catch (error) {
-            return Response.json({
-                success : false,
-                message : 'error during file extracking'
-            } , {status : 500})
-        }
+    let json
+    try {
+      json = JSON.parse(content!)
+    } catch (err) {
+      return NextResponse.json({
+        success: false,
+        message: 'Failed to parse OpenAI response as JSON',
+        raw: content,
+      }, { status: 500 })
+    }
 
+    return NextResponse.json({
+      success: true,
+      message: 'Resume processed successfully',
+      data: json,
+    })
+  } catch (error: any) {
+    console.error('❌ Error in resume reader:', error)
+    return NextResponse.json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    }, { status: 500 })
+  }
 }
