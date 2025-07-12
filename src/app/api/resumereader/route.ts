@@ -87,14 +87,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import pdfParse from 'pdf-parse'
 import OpenAI from 'openai'
+import {User} from 'next-auth'
+import { getServerSession } from 'next-auth'
+import {authOptions} from '../auth/[...nextauth]/options'
+import UserModel from '@/model/User.model'
 
-// connect db 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!, // Make sure this is set in .env
 })
 
 export async function POST(req: NextRequest) {
   try {
+
+    // connect db 
+    const session = await getServerSession(authOptions)
+    const user : User = session?.user as User
+
+    if (!session || !session.user) {
+        return NextResponse.json({
+            success : false,
+            message : "Not Autenticated"
+        })
+    }
+
     const data = await req.formData()
     const file = data.get('resume') as File
 
@@ -143,6 +158,24 @@ Resume:
     let json
     try {
       json = JSON.parse(content!)
+      const addDetails = await UserModel.findByIdAndUpdate(user._id,{
+        resumedetails : {
+            name: json.name,
+            email: json.email,
+            skills: json.skills,
+            education: json.education,
+            experience: json.experience,
+            projects: json.projects,
+            achievements: json.achievements
+        }
+      } , { new : true })
+
+      return NextResponse.json({
+      success: true,
+      message: 'Resume processed successfully',
+      data: addDetails,
+    })
+    
     } catch (err) {
       return NextResponse.json({
         success: false,
@@ -151,11 +184,6 @@ Resume:
       }, { status: 500 })
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Resume processed successfully',
-      data: json,
-    })
   } catch (error: any) {
     console.error('❌ Error in resume reader:', error)
     return NextResponse.json({

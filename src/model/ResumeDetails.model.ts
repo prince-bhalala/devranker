@@ -60,3 +60,4 @@ const resumeDetailsSchema = new Schema<Details>(
 );
 
 export default mongoose.models.ResumeDetail || mongoose.model<Details>("ResumeDetail", resumeDetailsSchema);
+    

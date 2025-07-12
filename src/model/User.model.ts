@@ -57,6 +57,64 @@ const TopProjectSchema :Schema<TopProject> = new Schema({
     }
 })
 
+export interface Project {
+  name: string;
+  description: string;
+}
+
+const ProjectSchema = new Schema<Project>({
+  name: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+  },
+});
+
+// Main Document Interface & Schema
+export interface Details extends Document {
+  name: string;
+  email: string;
+  skills: string[];
+  education: string;
+  experience: string;
+  projects: Project[];
+  achievements?: string[];
+}
+
+const resumeDetailsSchema = new Schema<Details>(
+  {
+    name: {
+      type: String,
+      required: [true, "Name is required"],
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+    },
+    skills: {
+      type: [String],
+      default: [],
+    },
+    education: {
+      type: String,
+    },
+    experience: {
+      type: String,
+    },
+    projects: {
+      type: [ProjectSchema],
+      default: [],
+    },
+    achievements: {
+      type: [String],
+      default: [],
+    },
+  },
+  { _id: false }
+);
+
 export  interface User extends Document {
     name: string;
     email: string;
@@ -70,6 +128,7 @@ export  interface User extends Document {
     score: number;
     topProject?: TopProject;
     lastLogin?: Date;
+    resumedetails : Details
 
 }
 
@@ -99,19 +158,28 @@ const userSchema :Schema<User> = new Schema({
         resumeUrl : { 
             type : String
         },
-        skills : [{ 
-            type : String
-        }],
-        repos : 
-            [RepoSchema]
-    ,
+        skills : {
+            type : [String],
+            default : []
+        },
+        repos : {
+            type : [RepoSchema],
+            default : []
+        },
         score : {
             type : Number,
             default : 0
         },
-        topProject : TopProjectSchema,
+        topProject : { 
+            type : TopProjectSchema
+        },
         lastLogin : {
             type : Date
+        },
+        resumedetails : {
+            type :  resumeDetailsSchema,
+            required : false,
+            default : undefined
         }
 
     } , {timestamps : true} )
