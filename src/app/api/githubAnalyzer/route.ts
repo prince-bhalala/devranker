@@ -100,13 +100,13 @@ export async function GET(request : NextRequest){
                 Data:
                 ${JSON.stringify(repoSummaries, null, 2)}`;
 
-                const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-                const chat = await openai.chat.completions.create({
-                  model: "gpt-3.5-turbo-0613",
-                  messages: [{ role: "user", content: prompt }],
-                  temperature: 0.4,
-                });
-                const summary = chat.choices[0].message.content;
+            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+            const chat = await openai.chat.completions.create({
+              model: "gpt-3.5-turbo-0613",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.4,
+            });
+            const summary = chat.choices[0].message.content;
 
 
             
@@ -126,9 +126,18 @@ export async function GET(request : NextRequest){
 
             const quotes = chats.choices[0].message.content;
 
+            const updatedUserDetails = await UserModel.findByIdAndUpdate(user?._id , {
+                githubanalysis : {
+                    topProjectsSummary : summary ,
+                    topLanguage : topLanguage,
+                    developerQuote : quotes
+                }
+            },{ new : true })
+
             return NextResponse.json({
               success: true,
-              mesaage : "Github all details Fetched successfully "
+              mesaage : "Github all details Fetched successfully ",
+              data : updatedUserDetails
             });
           } catch (error) {
             console.error('GitHub summary error:', error);
@@ -140,7 +149,4 @@ export async function GET(request : NextRequest){
             message : "Please connect your github accound first "
         })
     }
-
-
-
 }

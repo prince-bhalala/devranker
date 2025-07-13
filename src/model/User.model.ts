@@ -116,6 +116,24 @@ const resumeDetailsSchema = new Schema<Details>(
   { _id: false }
 );
 
+export interface githubDetails extends Document{
+  topProjectsSummary : string;
+  topLanguage : string;
+  developerQuote : string
+}
+
+const githubdetailschema : Schema<githubDetails> = new Schema({
+    topProjectsSummary : {
+      type : String
+    },
+    topLanguage : {
+      type : String
+    },
+    developerQuote : {
+      type : String
+    },
+})
+
 export  interface User extends Document {
     name: string;
     email: string;
@@ -131,6 +149,7 @@ export  interface User extends Document {
     lastLogin?: Date;
     resumedetails : Details;
     linkedinanalysis? : string;
+    githubanalysis? : githubDetails
 
 }
 
@@ -180,6 +199,12 @@ const userSchema :Schema<User> = new Schema({
         },
         resumedetails : {
             type :  resumeDetailsSchema,
+            required : false,
+            default : undefined
+
+        },
+        githubanalysis : {
+            type : githubdetailschema,
             required : false,
             default : undefined
         },
