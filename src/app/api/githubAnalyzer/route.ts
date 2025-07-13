@@ -46,10 +46,11 @@ export async function GET(request : NextRequest){
 
             let totalCommits = 0;
             const languageMap = new Map<string, number>();
+            const repoSummaries = [];
 
             // Step 2: Loop through repos to fetch commits and language data
             for (const repo of repos) {
-              const { name, owner, languages_url } = repo;
+              const { name, owner, languages_url , description } = repo;
             
               // Count commits
               const commitsRes = await fetch(`https://api.github.com/repos/${owner.login}/${name}/commits?author=${username}`, {
@@ -72,12 +73,59 @@ export async function GET(request : NextRequest){
               for (const [lang, bytes] of Object.entries(langData)) {
                 languageMap.set(lang, (languageMap.get(lang) || 0) + Number(bytes));
               }
+
+              const readmeRes = await fetch(`https://api.github.com/repos/${owner.login}/${repo.name}/readme`, {
+                  headers: {
+                    Authorization: `Bearer ${githubAccessToken}`,
+                    Accept: 'application/vnd.github.v3.raw', // This will return raw markdown
+                  }
+                });
+            const readmeText = await readmeRes.text();
+            repoSummaries.push({
+                name ,
+                description :  description || 'No Description Provided',
+                readme : readmeText || "Their Are no Readme File"
+
+            })
             }
         
+            const prompt = `
+                Analyze the following GitHub projects based on their name, description, and README content.
+                Select the top 2 most impressive ones and describe:
+
+                - What is the project about?
+                - What problem does it solve?
+                - Why is it valuable?
+
+                Data:
+                ${JSON.stringify(repoSummaries, null, 2)}`;
+
+                const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+                const chat = await openai.chat.completions.create({
+                  model: "gpt-3.5-turbo-0613",
+                  messages: [{ role: "user", content: prompt }],
+                  temperature: 0.4,
+                });
+                const summary = chat.choices[0].message.content;
+
+
+            
             // Convert languageMap to object and find top language
             const languagesUsed = Object.fromEntries(languageMap);
             const topLanguage = Object.entries(languagesUsed).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown';
-        
+
+            const promp = `Generate a 2-line professional summary for a developer who uses these languages:
+             ${Object.keys(languagesUsed).join(', ')} with ${totalCommits} commits and top language is ${topLanguage}`;
+
+            const ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+                const chats = await openai.chat.completions.create({
+                  model: "gpt-3.5-turbo-0613",
+                  messages: [{ role: "user", content: prompt }],
+                  temperature: 0.4,
+                });
+
+            const quotes = chats.choices[0].message.content;
+
             return NextResponse.json({
               success: true,
               mesaage : "Github all details Fetched successfully "
