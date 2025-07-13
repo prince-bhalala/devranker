@@ -1,7 +1,10 @@
 import { NextAuthOptions } from "next-auth"
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import LinkedInProvider from "next-auth/providers/linkedin"
 import UserModel from "../../../../model/User.model";
+
+
 
 export const  authOptions : NextAuthOptions = {
 
@@ -14,15 +17,31 @@ export const  authOptions : NextAuthOptions = {
             clientId: process.env.GOOGLE_ID! ,
             clientSecret: process.env.GOOGLE_SECRET!
         }),
+         LinkedInProvider({
+            clientId: process.env.LINKEDIN_CLIENT_ID!,
+            clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
+            authorization: {
+            params: {
+                scope: 'r_liteprofile r_emailaddress w_member_social',
+            },
+        }
+        }),
 
     ],
     callbacks : {
-        async jwt({token,user}){
+        async jwt({token,user,account,profile}){
+
+            
             if (user) {
                 token.id = user.id.toString()
                 token.email  = user.email,
                 token.name = user.name,
                 token.picture = user.image
+                if (account?.provider === "linkedin") {
+                    token.linkedinAccessToken = account.access_token;
+                    const linkedInProfile  = profile as any
+                    token.linkedinProfileUrl = linkedInProfile?.publicProfileUrl  || null;
+                }
             }
             return token
         },
@@ -33,6 +52,7 @@ export const  authOptions : NextAuthOptions = {
                 session.user.email = token.email as string
                 session.user.name = token.name as string
                 session.user.image = token.picture as string
+                
             }
             return session
         },

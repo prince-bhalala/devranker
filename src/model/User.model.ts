@@ -111,6 +111,7 @@ const resumeDetailsSchema = new Schema<Details>(
       type: [String],
       default: [],
     },
+    
   },
   { _id: false }
 );
@@ -128,7 +129,8 @@ export  interface User extends Document {
     score: number;
     topProject?: TopProject;
     lastLogin?: Date;
-    resumedetails : Details
+    resumedetails : Details;
+    linkedinanalysis? : string;
 
 }
 
@@ -180,6 +182,9 @@ const userSchema :Schema<User> = new Schema({
             type :  resumeDetailsSchema,
             required : false,
             default : undefined
+        },
+        linkedinanalysis : {
+          type : String
         }
 
     } , {timestamps : true} )

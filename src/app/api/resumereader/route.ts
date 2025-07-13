@@ -158,6 +158,22 @@ Resume:
     let json
     try {
       json = JSON.parse(content!)
+
+      const isInvalid = 
+        !json.name?.trim() ||
+        !json.email?.trim() ||
+        !Array.isArray(json.skills) || json.skills.length === 0 ||
+        !json.education?.trim() ||
+        !json.experience?.trim() ||
+        !Array.isArray(json.projects) || json.projects.length === 0;
+          
+      if (isInvalid) {
+        return NextResponse.json({
+          success: false,
+          message: 'Please upload a resume with proper details',
+        }, { status: 400 });
+      }
+
       const addDetails = await UserModel.findByIdAndUpdate(user._id,{
         resumedetails : {
             name: json.name,
