@@ -5,7 +5,6 @@ import LinkedInProvider from "next-auth/providers/linkedin"
 import UserModel from "../../../../model/User.model";
 
 
-
 export const  authOptions : NextAuthOptions = {
 
     providers : [
@@ -36,11 +35,16 @@ export const  authOptions : NextAuthOptions = {
                 token.id = user.id.toString()
                 token.email  = user.email,
                 token.name = user.name,
-                token.picture = user.image
+                token.picture = user.image as string
                 if (account?.provider === "linkedin") {
                     token.linkedinAccessToken = account.access_token;
                     const linkedInProfile  = profile as any
                     token.linkedinProfileUrl = linkedInProfile?.publicProfileUrl  || null;
+                }
+                if (account?.provider === "github") {
+                  token.githubAccessToken = account.access_token;
+                  token.isGithub = "github";
+
                 }
             }
             return token
@@ -51,8 +55,11 @@ export const  authOptions : NextAuthOptions = {
                 session.user.id = token.id as string
                 session.user.email = token.email as string
                 session.user.name = token.name as string
-                session.user.image = token.picture as string
-                
+                session.user.image = token.picture 
+                session.user.linkedinAccessToken = token.linkedinAccessToken as string
+                session.user.linkedinProfileUrl = token.linkedinProfileUrl as string
+                session.user.githubAccessToken = token.githubAccessToken as string
+                session.user.isGithub = token.isGithub as string ?? false
             }
             return session
         },
