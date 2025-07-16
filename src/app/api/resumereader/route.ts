@@ -91,6 +91,7 @@ import {User} from 'next-auth'
 import { getServerSession } from 'next-auth'
 import {authOptions} from '../auth/[...nextauth]/options'
 import UserModel from '@/model/User.model'
+import dbconnect from '@/app/lib/dbConnection'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!, // Make sure this is set in .env
@@ -99,7 +100,7 @@ const openai = new OpenAI({
 export async function POST(req: NextRequest) {
   try {
 
-    // connect db 
+    await dbconnect()
     const session = await getServerSession(authOptions)
     const user : User = session?.user as User
 

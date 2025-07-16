@@ -5,11 +5,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/options";
 import { NextResponse } from "next/server";
 import UserModel from "@/model/User.model";
-
+import dbconnect from "@/app/lib/dbConnection";
 
 export async function GET(request : NextApiRequest){
 
-    //db connect
+    await dbconnect();
 
     const session = await getServerSession(authOptions)
     const user : User = await session?.user as User
