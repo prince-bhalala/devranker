@@ -3,7 +3,7 @@ import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import LinkedInProvider from "next-auth/providers/linkedin"
 import UserModel from "../../../../model/User.model";
-
+import dbconnect from "@/app/lib/dbConnection";
 
 export const  authOptions : NextAuthOptions = {
 
@@ -65,12 +65,13 @@ export const  authOptions : NextAuthOptions = {
         },
 
         async signIn ({user , account}) {
-            //await dbconnect()
+
+            await dbconnect()
 
             const existingUser = await UserModel.findOne({email : user.email})
 
             if (existingUser) {
-                existingUser.lastLogin = Date.now()
+                existingUser.lastLogin = new Date();
                 await existingUser.save()
             }else{
                 await UserModel.create({

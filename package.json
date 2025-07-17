@@ -9,18 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "cloudinary": "^2.7.0",
+    "formidable": "^3.5.4",
     "mongodb": "^6.17.0",
     "mongoose": "^8.15.1",
     "next": "15.3.3",
     "next-auth": "^4.24.11",
     "openai": "^5.1.1",
     "pdf-parse": "^1.1.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^19.1.0",
+    "react-dom": "^19.0.0",
+    "tailwind": "^2.3.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/formidable": "^3.4.5",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",

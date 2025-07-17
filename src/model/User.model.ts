@@ -144,10 +144,10 @@ export  interface User extends Document {
     resumeUrl?: string;
     skills?: string[];
     repos?: Repos[];
-    score: number;
+    score?: number;
     topProject?: TopProject;
     lastLogin?: Date;
-    resumedetails : Details;
+    resumedetails? : Details;
     linkedinanalysis? : string;
     githubanalysis? : githubDetails
 
@@ -214,4 +214,4 @@ const userSchema :Schema<User> = new Schema({
 
     } , {timestamps : true} )
 
-export default mongoose.models.User || mongoose.model("User" , userSchema)
+export default (mongoose.models.User as mongoose.Model<User>) || (mongoose.model<User>("User" , userSchema))
